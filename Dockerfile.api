@@ -16,18 +16,23 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4) Install async ORM, SQLite driver (if you ever fallback), migrations & hashing
-#    — and the asyncpg driver for Postgres
+# 4) Install async ORM, migrations & hashing
 RUN pip install --no-cache-dir \
-      sqlalchemy[asyncio] \
+      "sqlalchemy[asyncio]" \
       alembic \
       aiosqlite \
       asyncpg \
-      passlib[bcrypt]
+      "passlib[bcrypt]"
 
-# 5) Copy your code & model artifact
-COPY app       ./app
-COPY notebooks/final_lightgbm_tuned.txt ./notebooks/final_lightgbm_tuned.txt
+# 5) Copy your LightGBM model into the image
+COPY notebooks/final_lightgbm_tuned.txt  ./model.txt
 
-# 6) Launch Uvicorn pointing at your FastAPI app
+# 6) Copy your application code
+COPY app/ ./app
+
+# 7) Tell the app where to find the model
+ENV MODEL_PATH=/app/model.txt
+
+# 8) Expose and launch
+EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
